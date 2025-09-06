@@ -1,5 +1,5 @@
-import AuthNav from "@/components/AuthNav"
-import Sidebar from "@/components/Sidebar"
+// import AuthNav from "@/components/AuthNav"
+import Sidebar from "../../components/Sidebar"
 import Link from "next/link"
 import { ReactNode } from "react"
 

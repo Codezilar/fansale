@@ -12,9 +12,9 @@ const Sidebar = () => {
                 <h1>fan<span>SALE</span></h1>
             </div>
             <div className="sidebar-content">
-                <Link href={''} ><span><IoTicketSharp className='text-2xl font-extrabold text-yellow-600' /><p>Tickets</p></span></Link>
-                <Link href={''} ><span><GiStoneCrafting className='text-2xl font-extrabold text-yellow-600' /><p>Create Tickets</p></span></Link>
-                <Link href={''} ><span><FcDeleteDatabase className='text-2xl font-extrabold text-yellow-600' /><p>Delete Tickets</p></span></Link>
+                <Link href={'/tickets'} ><span><IoTicketSharp className='text-2xl font-extrabold text-yellow-600' /><p>Tickets</p></span></Link>
+                <Link href={'/create'} ><span><GiStoneCrafting className='text-2xl font-extrabold text-yellow-600' /><p>Create Tickets</p></span></Link>
+                <Link href={'/delete'} ><span><FcDeleteDatabase className='text-2xl font-extrabold text-yellow-600' /><p>Delete Tickets</p></span></Link>
             </div>
         </div>
     </div>

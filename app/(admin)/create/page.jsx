@@ -1,45 +1,179 @@
-import React from 'react'
+"use client"
+import { useState } from 'react';
 import { GiStoneCrafting } from "react-icons/gi";
 
-const page = () => {
+const Home = () => {
+  const [formData, setFormData] = useState({
+    artistName: '',
+    locationInfo: '',
+    numberOfTickets: 1,
+    price: 100,
+    image: null
+  });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleImageChange = (e) => {
+    setFormData(prev => ({
+      ...prev,
+      image: e.target.files[0]
+    }));
+  };
+
+  // pages/index.js (Updated fetch call)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage('');
+
+    const data = new FormData();
+    data.append('artistName', formData.artistName);
+    data.append('locationInfo', formData.locationInfo);
+    data.append('numberOfTickets', formData.numberOfTickets);
+    data.append('price', formData.price);
+    data.append('image', formData.image);
+
+    try {
+      const response = await fetch('/api/tickets', {
+        method: 'POST',
+        body: data,
+        // Don't set Content-Type header when using FormData
+        // The browser will set it automatically with the correct boundary
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        setMessage('Ticket created successfully!');
+        setFormData({
+          artistName: '',
+          locationInfo: '',
+          numberOfTickets: 1,
+          price: 100,
+          image: null
+        });
+        document.querySelector('input[type="file"]').value = '';
+      } else {
+        setMessage(`Error: ${result.message}`);
+      }
+    } catch (error) {
+      setMessage('Error creating ticket. Please try again.');
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className='dash'>
       <div className="dash-top">
-       <span><GiStoneCrafting className='text-2xl font-extrabold text-yellow-600' /><p>Create Ticket</p></span>
+        <span>
+          <GiStoneCrafting className='text-2xl font-extrabold text-yellow-600' />
+          <p>Create Ticket</p>
+        </span>
       </div>
       <div className="dash-container">
-        <form className="dash-content">
-            <div className="labels">
-              <div className="label">
-                <h2>Artist Name:</h2>
-                <input type="text" placeholder='John Doe' />
-              </div>
-              <div className="label">
-                <h2>Location Desc and other info:</h2>
-                <input type="text" placeholder='Monday, July 7, 2025, 9:00 PM...' />
-              </div>
+        <form className="dash-content" onSubmit={handleSubmit}>
+          <div className="labels">
+            <div className="label">
+              <h2>Artist Name:</h2>
+              <input 
+                type="text" 
+                name="artistName"
+                placeholder='John Doe' 
+                value={formData.artistName}
+                onChange={handleChange}
+                required
+              />
             </div>
-            <div className="labels">
-              <div className="label">
-                <h2>Number of Tickets:</h2>
-                <input type="number" placeholder='1' />
-              </div>
-              <div className="label">
-                <h2>Price</h2>
-                <input type="number" placeholder='£100' />
-              </div>
+            <div className="label">
+              <h2>Location Desc and other info:</h2>
+              <input 
+                type="text" 
+                name="locationInfo"
+                placeholder='Monday, July 7, 2025, 9:00 PM...' 
+                value={formData.locationInfo}
+                onChange={handleChange}
+                required
+              />
             </div>
-            <div className="labels">
-              <div className="label">
-                <h2>Artist Image:</h2>
-                <input type="file" />
-              </div>
+          </div>
+          <div className="labels">
+            <div className="label">
+              <h2>Number of Tickets:</h2>
+              <input 
+                type="number" 
+                name="numberOfTickets"
+                placeholder='1' 
+                value={formData.numberOfTickets}
+                onChange={handleChange}
+                min="1"
+                required
+              />
             </div>
-            <button>Create Ticket</button>
+            <div className="label">
+              <h2>Price</h2>
+              <input 
+                type="number" 
+                name="price"
+                placeholder='£100' 
+                value={formData.price}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+          </div>
+          <div className="labels">
+            <div className="label">
+              <h2>Artist Image:</h2>
+              <input 
+                type="file" 
+                name="image"
+                onChange={handleImageChange}
+                accept="image/*"
+                required
+              />
+            </div>
+          </div>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Creating...' : 'Create Ticket'}
+          </button>
+          {message && <p className="message">{message}</p>}
         </form>
       </div>
+      
+      <style jsx>{`
+        button:hover {
+          background: #e6900b;
+        }
+        button:disabled {
+          background: #ccc;
+          cursor: not-allowed;
+        }
+        .message {
+          padding: 10px;
+          border-radius: 6px;
+          margin-top: 10px;
+          font-weight: 500;
+        }
+        .message:not(:empty) {
+          background: #d1fae5;
+          color: #065f46;
+          border: 1px solid #a7f3d0;
+        }
+      `}</style>
     </div>
-  )
-}
+  );
+};
 
-export default page
+export default Home;

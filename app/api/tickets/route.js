@@ -1,4 +1,3 @@
-// app/api/tickets/route.js
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import dbConnect from '../../lib/dbConnect';
@@ -15,6 +14,22 @@ cloudinary.config({
 export async function POST(request) {
   try {
     console.log('Connecting to database...');
+    
+    // Check Cloudinary configuration
+    const cloudinaryConfig = {
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    };
+
+    if (!cloudinaryConfig.cloud_name || !cloudinaryConfig.api_key || !cloudinaryConfig.api_secret) {
+      console.error('Cloudinary configuration missing');
+      return NextResponse.json(
+        { success: false, message: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
+
     await dbConnect();
     console.log('Database connected successfully');
     
@@ -37,6 +52,23 @@ export async function POST(request) {
       console.log('No image file provided');
       return NextResponse.json(
         { success: false, message: 'Image is required' },
+        { status: 400 }
+      );
+    }
+
+    // File validation
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (imageFile.size > maxSize) {
+      return NextResponse.json(
+        { success: false, message: 'Image size too large (max 10MB)' },
+        { status: 400 }
+      );
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(imageFile.type)) {
+      return NextResponse.json(
+        { success: false, message: 'Invalid file type. Please upload an image.' },
         { status: 400 }
       );
     }
@@ -85,17 +117,30 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error creating ticket:', error);
     console.error('Error stack:', error.stack);
+    console.error('Error name:', error.name);
+    
+    if (error.code) {
+      console.error('Error code:', error.code);
+    }
     
     return NextResponse.json(
       { 
         success: false, 
         message: 'Server error', 
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+        error: process.env.NODE_ENV === 'development' ? {
+          message: error.message,
+          stack: error.stack,
+          code: error.code,
+          name: error.name
+        } : 'Internal server error'
       },
       { status: 500 }
     );
   }
 }
+
+
+
 
 export async function GET() {
   try {

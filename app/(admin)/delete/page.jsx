@@ -41,15 +41,21 @@ const Page = () => {
     setDeletingId(ticketId);
     
     try {
-      const response = await fetch(`/api/tickets/${ticketId}`, {
+      console.log('Attempting to delete ticket with ID:', ticketId);
+      const response = await fetch(`/api/tickets/artist/${ticketId}`, {
         method: 'DELETE',
       });
       
+      console.log('Delete response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Delete failed with response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
       }
       
       const data = await response.json();
+      console.log('Delete response data:', data);
       
       if (data.success) {
         // Remove the deleted ticket from the list

@@ -1294,4 +1294,8 @@ footer ul li{
   .locationInfo{
     display: none;
   }
+
+  .labels{
+    flex-direction: column;
+  }
 }

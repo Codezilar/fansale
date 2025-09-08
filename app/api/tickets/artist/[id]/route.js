@@ -1,4 +1,4 @@
-// app/api/tickets/[id]/route.js
+// app/api/artist/[id]/route.js
 import { NextResponse } from 'next/server';
 import dbConnect from '../../../../lib/dbConnect';
 import Ticket from '../../../../models/Ticket';

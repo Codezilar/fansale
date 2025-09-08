@@ -4,10 +4,10 @@ import { IoTicketSharp } from "react-icons/io5";
 import { GiStoneCrafting } from "react-icons/gi";
 import { FcDeleteDatabase } from "react-icons/fc";
 
-const Sidebar = () => {
+const Sidebar = ({click}) => {
   return (
     <div className='sidebar'>
-        <div className="sidebar-container">
+        <div className="sidebar-container"> {/* Fixed typo: clickedBarCLose → clickedBarClose */}
             <div className="auth-logo">
                 <h1>fan<span>SALE</span></h1>
             </div>

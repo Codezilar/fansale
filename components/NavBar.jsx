@@ -2,23 +2,24 @@ import Link from 'next/link';
 import React from 'react'
 import { FaSearch } from "react-icons/fa";
 import { FaBars } from "react-icons/fa6";
+import { SignedOut } from '@clerk/nextjs';
+
 
 const NavBar = () => {
   return (
     <div className='nav'>
       <div className='nav-container'>
-        <Link href={'/'}>
           <div className="nav-logo">
             <div className='jhgbduhjssjd'>
-              <h1>fan<span>SALE</span></h1>
+              <Link href={'/'}>
+                <h1>fan<span>SALE</span></h1>
+              </Link>
                 <div className="mobile-nav">
-                  <Link href={'/sell_tickets'} className='flex w-full'>
                     <button className='Header-Button'>
                       <span>
-                        <p>Sell</p>
+                        <p><FaSearch className='text-white text-2xl' /></p>
                       </span>
                     </button>
-                  </Link>
                   <button className='Header-Button'>
                     <span>
                       <FaBars />
@@ -32,22 +33,27 @@ const NavBar = () => {
               <p className='-mt-1'>Fro Eventim UK</p>
             </div>
           </div>
-        </Link>
         <div className="nav-search">
           <input type="seaech" placeholder='Search for event, artist, location' />
           <FaSearch className='text-black text-2xl' />
         </div>
         <div className="btns">
-            <button className='Header-Button'>
-              <span>
-                <p>Sell</p>
-              </span>
-            </button>
-            <button className='Header-Button'>
-              <span>
-                <p>Login</p>
-              </span>
-            </button>
+            <Link href={'/sell_tickets'} className='flex w-full'>
+              <button className='Header-Button'>
+                <span>
+                  <p>Sell</p>
+                </span>
+              </button>
+            </Link>
+            <SignedOut>
+              <Link href={'/login'} className='flex w-full'>
+                <button className='Header-Button'>
+                  <span>
+                    <p>Login</p>
+                  </span>
+                </button>
+              </Link>
+            </SignedOut>
           <button className='Header-Button menuHead'>
             <span>
               <FaBars />

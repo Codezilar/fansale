@@ -1,4 +1,4 @@
-import AuthNav from "@/components/AuthNav"
+import AuthNav from "../../components/AuthNav"
 import Link from "next/link"
 import { ReactNode } from "react"
 

@@ -1,3 +1,5 @@
+"use client"
+
 import Image from "next/image";
 import { FaCaretUp } from "react-icons/fa";
 import { FaCaretDown } from "react-icons/fa";
@@ -6,7 +8,36 @@ import Recommendation from "../components/Recommendation";
 import Footer from "../components/Footer";
 import NavBar from "../components/NavBar";
 
+import React, { useState, useEffect } from 'react'
+import Link from "next/link";
+
 export default function Home() {
+    const [tickets, setTickets] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+  
+    useEffect(() => {
+      fetchTickets();
+    }, []);
+  
+    const fetchTickets = async () => {
+      try {
+        const response = await fetch('/api/tickets');
+        const data = await response.json();
+        
+        if (data.success) {
+          setTickets(data.data);
+        } else {
+          setError('Failed to fetch tickets');
+        }
+      } catch (error) {
+        console.error('Error fetching tickets:', error);
+        setError('Error fetching tickets. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+  
   return (
     <>
       <NavBar />
@@ -20,39 +51,27 @@ export default function Home() {
                   <h2>Top Sellers</h2>
                 </div>
                 <div className="sellers-text-container">
-                  <div className="sellers-left-item">
-                    <div className="sellers-left-content">
-                      <Image src={'/roler1.jpg'} className="rounded-[5px]" height={60} width={60} />
+                  {tickets.length === 0 ? (
+                    <div className="no-tickets">
+                      <p>Top 3 loading...</p>
                     </div>
-                    <div className="sellers-text">
-                      <span>  
-                        <h3>Role Model</h3>
-                        <p>Role Model</p>
-                      </span>
-                    </div>
-                  </div>
-                  <div className="sellers-left-item">
-                    <div className="sellers-left-content">
-                      <Image src={'/ethel-cain-2025-tickets-222.jpg'} className="rounded-[5px]" height={60} width={60} />
-                    </div>
-                    <div className="sellers-text">
-                      <span>  
-                        <h3>Ethel Cain</h3>
-                        <p>Ethel Cain</p>
-                      </span>
-                    </div>
-                  </div>
-                  <div className="sellers-left-item">
-                    <div className="sellers-left-content">
-                      <Image src={'/joanne-mcnally-new-2022-222.jpg'} className="rounded-[5px]" height={60} width={60} />
-                    </div>
-                    <div className="sellers-text">
-                      <span>  
-                        <h3>Joanne McNally</h3>
-                        <p>Joanne McNally: Pinotphile</p>
-                      </span>
-                    </div>
-                  </div>
+                  ) : (
+                    tickets.slice(0, 3).map(ticket => (
+                      <Link href={`/biglietti/${ticket._id}`} key={ticket.createdAt}>
+                        <div className="sellers-left-item">
+                          <div className="sellers-left-content">
+                            <Image src={ticket.imageUrl} className="rounded-[5px]" alt="grjh" height={60} width={60} />
+                          </div>
+                          <div className="sellers-text">
+                            <span>  
+                              <h3>{ticket.artistName}</h3>
+                              <p>{ticket.locationInfo}</p>
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))
+                  )}
                   <div className="sellers-left-item">
                     <div className="sellers-left-content">
                       <span>
@@ -166,6 +185,14 @@ export default function Home() {
         </div>
       </main>
       <Footer />
+      <style jsx>{`
+        .sellers-text span p{
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          width: 8rem;
+        }
+      `}</style>
     </>
   );
 }

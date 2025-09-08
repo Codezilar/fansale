@@ -1,4 +1,4 @@
-import { SignIn } from '@clerk/nextjs'
+import { SignUp } from '@clerk/nextjs'
 import EnterEmail from '../../../components/EnterEmail'
 import EnterPassword from '../../../components/EnterPassword'
 import React from 'react'
@@ -8,7 +8,7 @@ const page = () => {
     <div className='login'>
       {/* <EnterEmail /> */}
       {/* <EnterPassword /> */}
-      <SignIn />
+      <SignUp />
     </div>
   )
 }

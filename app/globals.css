@@ -659,6 +659,10 @@ footer ul li{
   height: fit-content;
 }
 
+.creIMG{
+  max-height: 10rem;
+}
+
 .cremonini-text{
   display: flex;
   flex-direction: column;
@@ -1088,6 +1092,7 @@ footer ul li{
   gap: 2rem;
 }
 
+
 .sidebar-content{
   display: flex;
   flex-direction: column;
@@ -1119,6 +1124,11 @@ footer ul li{
   flex-direction: column;
 }
 
+.dash-top{
+  display: flex;
+  justify-content: space-between;
+}
+
 .dash-top span{
   display: flex;
   align-items: center;
@@ -1127,6 +1137,10 @@ footer ul li{
   border-radius: 10px;
   font-weight: 900;
   font-size: 30px;
+}
+
+.btn-admin{
+  display: none;
 }
 
 .dash-container{
@@ -1207,14 +1221,9 @@ footer ul li{
 
 .tickets_admin-top{
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   justify-content: space-between;
   width: 100%;
-}
-
-
-.ticket_delete{
-  grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 
 .artist-manage{
@@ -1234,4 +1243,55 @@ footer ul li{
   padding: 0.5rem;
   border-radius: 5px;
   cursor: pointer;
+}
+
+
+
+@media (max-width: 900) {
+  .sidebar{
+    width: 30%;
+  }
+
+  .sidebar-container{
+    width: 30%;
+  }
+
+  .dash{
+    width: 70%;
+  }
+}
+
+@media (max-width: 769) {
+  .sidebar{
+    width: 4rem;
+  }
+
+  .sidebar-container{
+    width: 4rem;
+    padding: 0.5rem;
+  }
+
+  .auth-logo h1{
+    font-size: 12px;
+  }
+
+  .sidebar-content span p{
+    display: none;
+  }
+  
+  .dash{
+    width: 100%;
+  }
+
+  .btn-admin{
+    display: block;
+  }
+
+  .tickets_admin-top{
+    grid-template-columns: 3fr 1fr 1fr;
+  }
+
+  .locationInfo{
+    display: none;
+  }
 }

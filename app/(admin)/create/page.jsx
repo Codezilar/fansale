@@ -71,7 +71,6 @@ const Home = () => {
       setLoading(false);
     }
   };
-
   return (
     <div className='dash'>
       <div className="dash-top">

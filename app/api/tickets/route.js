@@ -1,4 +1,4 @@
-// app/api/tickets/route.js (Simplified)
+// app/api/tickets/route.js
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import dbConnect from '../../lib/dbConnect';
@@ -22,7 +22,15 @@ export async function POST(request) {
     const price = formData.get('price');
     const imageFile = formData.get('image');
     
-    if (!imageFile) {
+    // Validation
+    if (!artistName || !locationInfo || !numberOfTickets || !price) {
+      return NextResponse.json(
+        { success: false, message: 'All fields are required' },
+        { status: 400 }
+      );
+    }
+    
+    if (!imageFile || imageFile === 'null') {
       return NextResponse.json(
         { success: false, message: 'Image is required' },
         { status: 400 }
@@ -38,8 +46,12 @@ export async function POST(request) {
       cloudinary.uploader.upload_stream(
         { folder: 'ticket_images' },
         (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
+          if (error) {
+            console.error('Cloudinary upload error:', error);
+            reject(error);
+          } else {
+            resolve(result);
+          }
         }
       ).end(buffer);
     });
@@ -68,7 +80,7 @@ export async function POST(request) {
       { 
         success: false, 
         message: 'Server error', 
-        error: error.message 
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
       },
       { status: 500 }
     );

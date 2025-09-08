@@ -29,24 +29,25 @@ const Home = () => {
   };
 
   // pages/index.js (Updated fetch call)
+  // Update your handleSubmit function
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
 
-    const data = new FormData();
-    data.append('artistName', formData.artistName);
-    data.append('locationInfo', formData.locationInfo);
-    data.append('numberOfTickets', formData.numberOfTickets);
-    data.append('price', formData.price);
-    data.append('image', formData.image);
-
     try {
+      const data = new FormData();
+      data.append('artistName', formData.artistName);
+      data.append('locationInfo', formData.locationInfo);
+      data.append('numberOfTickets', formData.numberOfTickets);
+      data.append('price', formData.price);
+      if (formData.image) {
+        data.append('image', formData.image);
+      }
+
       const response = await fetch('/api/tickets', {
         method: 'POST',
         body: data,
-        // Don't set Content-Type header when using FormData
-        // The browser will set it automatically with the correct boundary
       });
 
       const result = await response.json();
@@ -60,17 +61,22 @@ const Home = () => {
           price: 100,
           image: null
         });
-        document.querySelector('input[type="file"]').value = '';
+        // Reset file input
+        if (document.querySelector('input[type="file"]')) {
+          document.querySelector('input[type="file"]').value = '';
+        }
       } else {
-        setMessage(`Error: ${result.message}`);
+        setMessage(`Error: ${result.message || 'Unknown error'}`);
+        console.error('API Error:', result);
       }
     } catch (error) {
       setMessage('Error creating ticket. Please try again.');
-      console.error('Error:', error);
+      console.error('Network Error:', error);
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <div className='dash'>
       <div className="dash-top">

@@ -9,11 +9,14 @@ cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
 });
 
 export async function POST(request) {
   try {
+    console.log('Connecting to database...');
     await dbConnect();
+    console.log('Database connected successfully');
     
     const formData = await request.formData();
     const artistName = formData.get('artistName');
@@ -22,15 +25,16 @@ export async function POST(request) {
     const price = formData.get('price');
     const imageFile = formData.get('image');
     
-    // Validation
-    if (!artistName || !locationInfo || !numberOfTickets || !price) {
-      return NextResponse.json(
-        { success: false, message: 'All fields are required' },
-        { status: 400 }
-      );
-    }
+    console.log('Received form data:', { 
+      artistName, 
+      locationInfo, 
+      numberOfTickets, 
+      price,
+      hasImage: !!imageFile 
+    });
     
     if (!imageFile || imageFile === 'null') {
+      console.log('No image file provided');
       return NextResponse.json(
         { success: false, message: 'Image is required' },
         { status: 400 }
@@ -41,6 +45,7 @@ export async function POST(request) {
     const arrayBuffer = await imageFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
+    console.log('Uploading to Cloudinary...');
     // Upload to Cloudinary
     const result = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
@@ -50,12 +55,14 @@ export async function POST(request) {
             console.error('Cloudinary upload error:', error);
             reject(error);
           } else {
+            console.log('Cloudinary upload successful:', result.secure_url);
             resolve(result);
           }
         }
       ).end(buffer);
     });
     
+    console.log('Creating ticket in database...');
     const ticket = await Ticket.create({
       artistName,
       locationInfo,
@@ -65,6 +72,8 @@ export async function POST(request) {
       imagePublicId: result.public_id,
     });
 
+    console.log('Ticket created successfully:', ticket._id);
+    
     return NextResponse.json(
       { 
         success: true, 
@@ -75,6 +84,7 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error('Error creating ticket:', error);
+    console.error('Error stack:', error.stack);
     
     return NextResponse.json(
       { 

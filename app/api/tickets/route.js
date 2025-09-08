@@ -4,55 +4,45 @@ import { v2 as cloudinary } from 'cloudinary';
 import dbConnect from '../../lib/dbConnect';
 import Ticket from '../../models/Ticket';
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
-
-// Helper function for Cloudinary upload with retry logic
-const uploadWithRetry = async (buffer, folder, filename, retries = 3) => {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      console.log(`📤 Upload attempt ${attempt} for ${folder}`);
-      return await new Promise((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-          { folder, public_id: filename },
-          (error, result) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(result);
-            }
-          }
-        ).end(buffer);
-      });
-    } catch (error) {
-      if (attempt === retries) throw error;
-      console.warn(`⚠️ Upload attempt ${attempt} failed, retrying...`);
-      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-    }
-  }
-  throw new Error('All upload attempts failed');
-};
+// Configure Cloudinary with error handling
+try {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true,
+  });
+  console.log('✅ Cloudinary configured');
+} catch (configError) {
+  console.error('❌ Cloudinary config error:', configError);
+}
 
 export async function POST(request) {
   try {
     console.log('📨 Ticket submission received');
     
-    // Check Cloudinary configuration first
+    // Check Cloudinary configuration
     const cloudinaryConfig = {
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
       api_key: process.env.CLOUDINARY_API_KEY,
       api_secret: process.env.CLOUDINARY_API_SECRET,
     };
 
+    console.log('Cloudinary config check:', {
+      hasCloudName: !!cloudinaryConfig.cloud_name,
+      hasApiKey: !!cloudinaryConfig.api_key,
+      hasApiSecret: !!cloudinaryConfig.api_secret,
+      nodeEnv: process.env.NODE_ENV
+    });
+
     if (!cloudinaryConfig.cloud_name || !cloudinaryConfig.api_key || !cloudinaryConfig.api_secret) {
       console.error('❌ Cloudinary configuration missing');
       return NextResponse.json(
-        { success: false, message: 'Server configuration error' },
+        { 
+          success: false, 
+          message: 'Server configuration error',
+          details: process.env.NODE_ENV === 'development' ? 'Cloudinary credentials missing' : undefined
+        },
         { status: 500 }
       );
     }
@@ -63,21 +53,6 @@ export async function POST(request) {
     
     const formData = await request.formData();
     
-    // Validate all required fields
-    const requiredFields = ['artistName', 'locationInfo', 'numberOfTickets', 'price', 'image'];
-    const missingFields = requiredFields.filter(field => {
-      const value = formData.get(field);
-      return !value || (value instanceof File && value.size === 0);
-    });
-
-    if (missingFields.length > 0) {
-      console.error('❌ Missing required fields:', missingFields);
-      return NextResponse.json(
-        { success: false, message: `Missing required fields: ${missingFields.join(', ')}` },
-        { status: 400 }
-      );
-    }
-
     // Extract form data
     const artistName = formData.get('artistName');
     const locationInfo = formData.get('locationInfo');
@@ -90,8 +65,18 @@ export async function POST(request) {
       locationInfo, 
       numberOfTickets, 
       price,
-      hasImage: !!imageFile 
+      hasImage: !!imageFile,
+      imageType: imageFile?.type,
+      imageSize: imageFile?.size
     });
+
+    if (!imageFile || imageFile === 'null' || imageFile.size === 0) {
+      console.log('No image file provided');
+      return NextResponse.json(
+        { success: false, message: 'Image is required' },
+        { status: 400 }
+      );
+    }
 
     // File validation
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -102,10 +87,14 @@ export async function POST(request) {
       );
     }
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
     if (!allowedTypes.includes(imageFile.type)) {
       return NextResponse.json(
-        { success: false, message: 'Invalid file type. Please upload an image (JPEG, PNG, GIF, WEBP).' },
+        { 
+          success: false, 
+          message: 'Invalid file type. Please upload an image (JPEG, PNG, GIF, WEBP).',
+          receivedType: imageFile.type
+        },
         { status: 400 }
       );
     }
@@ -116,55 +105,95 @@ export async function POST(request) {
     
     console.log('Uploading to Cloudinary...');
     
-    try {
-      // Upload to Cloudinary with retry logic
-      const result = await uploadWithRetry(
-        buffer, 
-        'ticket_images', 
-        `${artistName}_${Date.now()}`
+    // Upload to Cloudinary with promise-based approach
+    const uploadResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { 
+          folder: 'ticket_images',
+          resource_type: 'image',
+          timeout: 30000 // 30 second timeout
+        },
+        (error, result) => {
+          if (error) {
+            console.error('❌ Cloudinary upload error details:', {
+              message: error.message,
+              name: error.name,
+              http_code: error.http_code,
+              status: error.status
+            });
+            reject(error);
+          } else {
+            console.log('✅ Cloudinary upload successful:', {
+              url: result.secure_url,
+              public_id: result.public_id,
+              format: result.format,
+              bytes: result.bytes
+            });
+            resolve(result);
+          }
+        }
       );
-
-      console.log('✅ Cloudinary upload successful:', result.secure_url);
       
-      console.log('Creating ticket in database...');
-      const ticket = await Ticket.create({
-        artistName,
-        locationInfo,
-        numberOfTickets: parseInt(numberOfTickets),
-        price: parseFloat(price),
-        imageUrl: result.secure_url,
-        imagePublicId: result.public_id,
+      // Handle stream errors
+      uploadStream.on('error', (error) => {
+        console.error('❌ Cloudinary stream error:', error);
+        reject(error);
       });
-
-      console.log('✅ Ticket created successfully:', ticket._id);
       
+      uploadStream.end(buffer);
+    });
+
+    console.log('Creating ticket in database...');
+    const ticket = await Ticket.create({
+      artistName,
+      locationInfo,
+      numberOfTickets: parseInt(numberOfTickets),
+      price: parseFloat(price),
+      imageUrl: uploadResult.secure_url,
+      imagePublicId: uploadResult.public_id,
+    });
+
+    console.log('✅ Ticket created successfully:', ticket._id);
+    
+    return NextResponse.json(
+      { 
+        success: true, 
+        message: 'Ticket created successfully', 
+        data: ticket 
+      },
+      { status: 201 }
+    );
+
+  } catch (error) {
+    console.error('❌ Ticket creation error:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      code: error.code,
+      http_code: error.http_code
+    });
+    
+    // Handle specific error types
+    if (error.message.includes('ETIMEDOUT') || error.message.includes('timeout')) {
       return NextResponse.json(
         { 
-          success: true, 
-          message: 'Ticket created successfully', 
-          data: ticket 
+          success: false, 
+          message: 'Upload timeout. Please try again with a smaller image.' 
         },
-        { status: 201 }
+        { status: 408 }
       );
-
-    } catch (uploadError) {
-      console.error('❌ File upload error:', uploadError);
+    }
+    
+    if (error.http_code === 401) {
       return NextResponse.json(
-        { success: false, message: 'Failed to upload image. Please try again.' },
+        { 
+          success: false, 
+          message: 'Authentication error. Please check server configuration.' 
+        },
         { status: 500 }
       );
     }
-
-  } catch (error) {
-    console.error('❌ Ticket creation error:', error);
-    console.error('Error stack:', error.stack);
-    console.error('Error name:', error.name);
     
-    if (error.code) {
-      console.error('Error code:', error.code);
-    }
-    
-    // Handle specific error types
     if (error.name === 'ValidationError') {
       return NextResponse.json(
         { success: false, message: 'Validation failed. Please check your input.' },
@@ -175,12 +204,11 @@ export async function POST(request) {
     return NextResponse.json(
       { 
         success: false, 
-        message: 'Internal server error. Please try again later.',
-        error: process.env.NODE_ENV === 'development' ? {
-          message: error.message,
-          name: error.name,
-          code: error.code
-        } : undefined
+        message: 'Failed to upload image. Please try again.',
+        ...(process.env.NODE_ENV === 'development' && {
+          error: error.message,
+          details: error.http_code ? `Cloudinary error: ${error.http_code}` : undefined
+        })
       },
       { status: 500 }
     );
@@ -213,7 +241,6 @@ export async function GET() {
   }
 }
 
-// Add config for body parsing
 export const config = {
   api: {
     bodyParser: false,

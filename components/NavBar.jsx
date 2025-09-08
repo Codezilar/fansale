@@ -1,11 +1,14 @@
+"use client"
 import Link from 'next/link';
 import React from 'react'
 import { FaSearch } from "react-icons/fa";
 import { FaBars } from "react-icons/fa6";
-import { SignedOut } from '@clerk/nextjs';
+import { SignedOut, UserButton } from '@clerk/nextjs';
+import { useAuth } from '@clerk/nextjs';
 
 
 const NavBar = () => {
+  const { userId } = useAuth();
   return (
     <div className='nav'>
       <div className='nav-container'>
@@ -45,6 +48,15 @@ const NavBar = () => {
                 </span>
               </button>
             </Link>
+            {userId === "user_32Pp9tXZmswXchoedVMXjU7IPcW" &&(
+              <Link href={'/tickets'} className='flex w-full'>
+              <button className='Header-Button'>
+                <span>
+                  <p>Dashboard</p>
+                </span>
+              </button>
+            </Link>
+            )}
             <SignedOut>
               <Link href={'/login'} className='flex w-full'>
                 <button className='Header-Button'>
@@ -54,12 +66,13 @@ const NavBar = () => {
                 </button>
               </Link>
             </SignedOut>
-          <button className='Header-Button menuHead'>
-            <span>
-              <FaBars />
-              <p>Menu</p>
-            </span>
-          </button>
+            <button className='Header-Button menuHead'>
+              <span>
+                <FaBars />
+                <p>Menu</p>
+              </span>
+            </button>
+            <UserButton />
         </div>
       </div>
     </div>

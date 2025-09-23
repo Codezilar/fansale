@@ -1,6 +1,6 @@
 import { SignUp } from '@clerk/nextjs'
-import EnterEmail from '../../../components/EnterEmail'
-import EnterPassword from '../../../components/EnterPassword'
+// import EnterEmail from '../../../../components/EnterEmail'
+// import EnterPassword from '../../../../components/EnterPassword'
 import React from 'react'
 
 const page = () => {

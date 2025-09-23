@@ -1,31 +1,18 @@
-"use client";
+"use client"
 import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
-import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation'; // Fixed import
+import Link from 'next/link'; // Added missing import
+import { useParams } from 'next/navigation';
 import { FaChevronLeft } from 'react-icons/fa';
-import { useUser, useAuth } from "@clerk/nextjs";
 
 const Page = () => {
-    const { isLoaded, isSignedIn, user } = useUser();
-    const { userId } = useAuth();
-    const router = useRouter(); // Now from next/navigation
-    const params = useParams(); // If you need params
-
-    useEffect(() => {
-      if (isLoaded && !isSignedIn) {
-        router.push("/signup");
-      }
-    }, [isLoaded, isSignedIn, router]);
-
-
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes in seconds
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const walletAddress = 'bc1puu5vr0yc95zcqgdgff0zucfhu0khm756t8du84r6z7dpdmtd6a4sf9qj5m'; 
 
-  // const params = useParams();
+  const params = useParams();
   const id = params?.id;
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);

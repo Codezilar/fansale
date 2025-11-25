@@ -20,35 +20,47 @@ const Page = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Payment providers configuration
+  // Payment providers configuration (robust URL generation)
   const paymentProviders = [
     {
       name: 'PAYBILLS',
       url: 'https://paybills.com',
       type: 'redirect',
       description: 'Secure crypto payments',
-      generateUrl: (amount, address) => `https://paybills.com/pay?address=${address}&amount=${amount}&currency=GBP`
+      generateUrl: function (amount, address) {
+        const params = new URLSearchParams({ address: address, amount: String(amount), currency: 'GBP' });
+        return `${this.url.replace(/\/$/, '')}/pay?${params.toString()}`;
+      }
     },
     {
       name: 'NOWPayments',
       url: 'https://nowpayments.io',
-      type: 'redirect', 
+      type: 'redirect',
       description: 'Instant crypto processing',
-      generateUrl: (amount, address) => `https://nowpayments.io/payment?i=1&address=${address}&amount=${amount}&currency=btc`
+      generateUrl: function (amount, address) {
+        const params = new URLSearchParams({ i: '1', address: address, amount: String(amount), currency: 'btc' });
+        return `${this.url.replace(/\/$/, '')}/payment?${params.toString()}`;
+      }
     },
     {
       name: 'CoinGate',
       url: 'https://coingate.com',
       type: 'redirect',
       description: 'Multi-currency support',
-      generateUrl: (amount, address) => `https://coingate.com/pay/invoice?address=${address}&amount=${amount}`
+      generateUrl: function (amount, address) {
+        const params = new URLSearchParams({ address: address, amount: String(amount) });
+        return `${this.url.replace(/\/$/, '')}/pay/invoice?${params.toString()}`;
+      }
     },
     {
       name: 'Coinbase Commerce',
       url: 'https://commerce.coinbase.com',
       type: 'redirect',
       description: 'Enterprise-grade payments',
-      generateUrl: (amount, address) => `https://commerce.coinbase.com/checkout?address=${address}&amount=${amount}`
+      generateUrl: function (amount, address) {
+        const params = new URLSearchParams({ address: address, amount: String(amount) });
+        return `${this.url.replace(/\/$/, '')}/checkout?${params.toString()}`;
+      }
     }
   ];
 
@@ -65,12 +77,19 @@ const Page = () => {
     try {
       console.log('Fetching ticket with ID:', ticketId);
       
-      // Try multiple API endpoints in case of routing issues
+      // Try multiple API endpoints in case of routing issues. If you have an external API base,
+      // you can set `NEXT_PUBLIC_API_BASE` in your environment (optional). No API key required.
+      const API_BASE = typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_API_BASE ? process.env.NEXT_PUBLIC_API_BASE.replace(/\/$/, '') : '';
+
       const endpoints = [
         `/api/tickets/artist/${ticketId}`,
-        `/api/tickets/${ticketId}`,
-        `https://your-backend.com/api/tickets/${ticketId}` // Replace with your actual backend
+        `/api/tickets/${ticketId}`
       ];
+
+      if (API_BASE) {
+        endpoints.push(`${API_BASE}/api/tickets/artist/${ticketId}`);
+        endpoints.push(`${API_BASE}/api/tickets/${ticketId}`);
+      }
 
       let response = null;
       let lastError = null;
@@ -137,6 +156,17 @@ const Page = () => {
     
     // Reset redirecting state after a short delay
     setTimeout(() => setIsRedirecting(false), 2000);
+  };
+
+  // Automatically redirect to the default provider (first in list)
+  const handleAutoPay = () => {
+    if (!ticket) return;
+    const defaultProvider = paymentProviders && paymentProviders.length ? paymentProviders[0] : null;
+    if (!defaultProvider) {
+      alert('No payment provider configured');
+      return;
+    }
+    handleProviderRedirect(defaultProvider);
   };
 
   // Timer useEffect
@@ -252,6 +282,15 @@ const Page = () => {
             <h3 className="font-semibold text-gray-900 mb-4 text-center">
               Select Payment Provider
             </h3>
+            <div className="mb-4 flex justify-center">
+              <button
+                onClick={handleAutoPay}
+                disabled={isRedirecting}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              >
+                {isRedirecting ? 'Opening...' : 'Pay Now (Auto)'}
+              </button>
+            </div>
             <div className="space-y-3">
               {paymentProviders.map((provider) => (
                 <button

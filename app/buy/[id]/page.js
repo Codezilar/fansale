@@ -24,25 +24,25 @@ const Page = () => {
   const paymentProviders = [
     {
       name: 'PAYBILLS',
-      url: 'https://paybills.com',
+      url: 'https://paybis.com/user/login/',
       type: 'redirect',
       description: 'Secure crypto payments'
     },
     {
       name: 'NOWPayments',
-      url: 'https://nowpayments.io',
+      url: 'https://account.nowpayments.io/sign-in',
       type: 'redirect',
       description: 'Instant crypto processing'
     },
     {
       name: 'CoinGate',
-      url: 'https://coingate.com',
+      url: 'https://accounts.coingate.com/login/',
       type: 'redirect',
       description: 'Multi-currency support'
     },
     {
-      name: 'Coinbase Commerce',
-      url: 'https://commerce.coinbase.com',
+      name: 'Coinbase',
+      url: 'https://login.coinbase.com/signin',
       type: 'redirect',
       description: 'Enterprise-grade payments'
     }

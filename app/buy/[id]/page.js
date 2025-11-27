@@ -23,6 +23,16 @@ const Page = () => {
   // Payment providers configuration (robust URL generation)
   const paymentProviders = [
     {
+      name: 'Paybis',
+      url: 'https://paybis.com',
+      type: 'redirect',
+      description: 'Easy crypto payments with login',
+      generateUrl: function (amount, address) {
+        // Paybis requires login first, then payment
+        return `${this.url.replace(/\/$/, '')}/user/login/`;
+      }
+    },
+    {
       name: 'PAYBILLS',
       url: 'https://paybills.com',
       type: 'redirect',
@@ -149,6 +159,16 @@ const Page = () => {
     
     if (newWindow) {
       newWindow.focus();
+      
+      // For Paybis, show additional instructions since it goes to login first
+      if (provider.name === 'Paybis') {
+        setTimeout(() => {
+          if (window.confirm('You are being redirected to Paybis. After logging in, you will need to manually initiate a payment to the Bitcoin address provided. Would you like to see the payment details again?')) {
+            // User can copy the address again if needed
+            copyToClipboard();
+          }
+        }, 1000);
+      }
     } else {
       // Fallback if popup is blocked
       alert('Popup blocked! Please allow popups for this site or click the link manually.');
@@ -286,7 +306,7 @@ const Page = () => {
               <button
                 onClick={handleAutoPay}
                 disabled={isRedirecting}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isRedirecting ? 'Opening...' : 'Pay Now (Auto)'}
               </button>
@@ -303,6 +323,11 @@ const Page = () => {
                     <div className="font-semibold text-gray-900 group-hover:text-blue-700 flex items-center">
                       {provider.name}
                       <FaExternalLinkAlt className="ml-2 text-xs text-gray-400" />
+                      {provider.name === 'Paybis' && (
+                        <span className="ml-2 text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                          Login Required
+                        </span>
+                      )}
                     </div>
                     <div className="text-sm text-gray-500">
                       {provider.description}
@@ -313,6 +338,13 @@ const Page = () => {
                   </div>
                 </button>
               ))}
+            </div>
+            
+            {/* Paybis Specific Instructions */}
+            <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <p className="text-sm text-orange-800">
+                <strong>Note for Paybis:</strong> You'll be redirected to login first. After logging in, manually send <strong>£{ticket?.price || '0.00'}</strong> worth of BTC to the address below.
+              </p>
             </div>
           </div>
 
@@ -329,7 +361,7 @@ const Page = () => {
           {/* Manual Payment Option */}
           <div className="mb-6">
             <h3 className="font-semibold text-gray-900 mb-3 text-center">
-              Manual Payment
+              Direct Wallet Payment
             </h3>
             
             {/* QR Code */}
@@ -381,6 +413,12 @@ const Page = () => {
                 <span className="font-mono">£{ticket?.price || '0.00'}</span>
               </div>
               <div className="flex justify-between">
+                <span className="text-gray-600">BTC Amount:</span>
+                <span className="font-mono">
+                  ~{(ticket?.price / 40000).toFixed(8)} BTC {/* Example conversion rate */}
+                </span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-gray-600">No of Tickets:</span>
                 <span className="font-mono">
                   {ticket?.numberOfTickets || 1} {ticket?.numberOfTickets === 1 ? "Ticket" : "Tickets"}
@@ -411,6 +449,7 @@ const Page = () => {
               <li>• Do not send from exchange wallets</li>
               <li>• Transaction may take 2-3 minutes to confirm</li>
               <li>• Payment window: 1 hour</li>
+              <li>• For Paybis: Login first, then manually send payment</li>
             </ul>
           </div>
 
